@@ -16,6 +16,7 @@ namespace RailShooter
         InputAction moveAction;
         InputAction aimAction;
         InputAction fireAction;
+        InputAction rollAction;
 
         float lastMoveTime;
         float lastMoveDirection;
@@ -23,6 +24,7 @@ namespace RailShooter
         public event Action LeftTap;
         public event Action RightTap;
         public event Action Fire;
+        public event Action Roll;
 
         public Vector2 Move => moveAction.ReadValue<Vector2>();
         public Vector2 Aim => aimAction.ReadValue<Vector2>();
@@ -32,6 +34,7 @@ namespace RailShooter
             moveAction = playerInput.actions["Move"];
             aimAction = playerInput.actions["Aim"];
             fireAction = playerInput.actions["Fire"];
+            rollAction = playerInput.actions["Roll"];
         }
 
         void OnEnable()
@@ -66,6 +69,7 @@ namespace RailShooter
             lastMoveDirection = currentDirection;
         }
         private void OnFire(InputAction.CallbackContext context) => Fire?.Invoke();
+        private void OnRoll(InputAction.CallbackContext context) => Roll?.Invoke();
 
     }
 }

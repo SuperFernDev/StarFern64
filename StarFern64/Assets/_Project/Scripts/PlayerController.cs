@@ -8,9 +8,24 @@ using UnityEngine;
 
 namespace RailShooter
 {
-    public class PlayerController : ValidatedMonoBehaviour
+    public class PlayerController : ValidatedMonoBehaviour, IDamage
     {
         [SerializeField, Self] InputReader input;
+
+        [Header("----- Player Stats -----")]
+        [SerializeField] int HP = 10;
+        [SerializeField] float movementRange = 5f;
+        [SerializeField] float movementSpeed = 10f;
+        [SerializeField] float smoothTime = 0.2f;
+        [SerializeField] float maxRoll = 15f;
+        [SerializeField] float rollSpeed = 2f;
+        [SerializeField] float rollDuration = 1f;
+        [SerializeField] float rotationSpeed = 10f;
+
+        [SerializeField] Renderer[] models;
+        [SerializeField] Material damageMaterial;
+        [SerializeField] GameObject explosionPrefab;
+        [SerializeField] float explosionDuration;
 
         [SerializeField] Transform followTarget;
         [SerializeField] Transform aimTarget;
@@ -18,30 +33,32 @@ namespace RailShooter
         [SerializeField] Transform playerModel;
         [SerializeField] float followDistance;
         [SerializeField] Vector2 movementLimit = new Vector2(2f, 2f);
-        [SerializeField] float movementRange = 5f;
-        [SerializeField] float movementSpeed = 10f;
-        [SerializeField] float smoothTime = 0.2f;
-
-        [SerializeField] float maxRoll = 15f;
-        [SerializeField] float rollSpeed = 2f;
-        [SerializeField] float rollDuration = 1f;
 
         [SerializeField] Transform modelParent;
-        [SerializeField] float rotationSpeed = 10f;
+
+        [SerializeField] GameObject[] trailEffects;
 
         Vector3 velocity;
         [SerializeField] float roll;
+
+        Material originalMaterial;
+        
 
         void Awake()
         {
             input.LeftTap += OnLeftTap;
             input.RightTap += OnRightTap;
+            input.Roll += OnRollTap;
         }
 
         // Start is called before the first frame update
         void Start()
         {
-
+            foreach (var trail in trailEffects)
+            {
+                trail.GetComponent<TrailRenderer>().enabled = false;
+            }
+            originalMaterial = models[0].material;
         }
 
         // Update is called once per frame
@@ -54,6 +71,11 @@ namespace RailShooter
 
         void OnLeftTap() => BarrelRoll();
         void OnRightTap() => BarrelRoll(1);
+        void OnRollTap()
+        {
+            int random = UnityEngine.Random.Range(0, 1) == 0 ? -1 : 1;
+            BarrelRoll(random);
+        }
 
         private void HandlePosition()
         {
@@ -100,9 +122,27 @@ namespace RailShooter
         {
             if (!DOTween.IsTweening(playerModel))
             {
+                StartCoroutine(ActivateTrails());
+
                 playerModel.DOLocalRotate(
                     new Vector3(playerModel.localEulerAngles.x, playerModel.localEulerAngles.y, 360 * direction),
                     rollDuration, RotateMode.LocalAxisAdd).SetEase(Ease.OutCubic);
+
+                
+            }
+
+        }
+
+        private IEnumerator ActivateTrails()
+        {
+            foreach (var trail in trailEffects)
+            {
+                trail.GetComponent<TrailRenderer>().enabled = true;
+            }
+            yield return new WaitForSeconds(rollDuration);
+            foreach (var trail in trailEffects)
+            {
+                trail.GetComponent<TrailRenderer>().enabled = false;
             }
         }
 
@@ -110,6 +150,35 @@ namespace RailShooter
         {
             input.LeftTap -= OnLeftTap;
             input.RightTap -= OnRightTap;
+        }
+        IEnumerator flashDamage()
+        {
+            foreach (var model in models)
+            {
+                model.material = damageMaterial;
+            }
+
+            yield return new WaitForSeconds(0.1f);
+
+            foreach (var model in models)
+            {
+                model.material = originalMaterial;
+            }
+
+        }
+
+        public void takeDamage(int amount)
+        {
+            HP -= amount;
+
+            StartCoroutine(flashDamage());
+
+            if (HP <= 0)
+            {
+                GameObject explosion = Instantiate(explosionPrefab, this.transform.position, this.transform.rotation);
+                Destroy(gameObject);
+                Destroy(explosion, explosionDuration);
+            }
         }
     }
 }

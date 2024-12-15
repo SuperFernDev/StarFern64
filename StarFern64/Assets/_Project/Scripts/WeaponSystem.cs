@@ -51,11 +51,11 @@ namespace RailShooter
                 aimOffset.x = Mathf.Clamp(aimOffset.x, -aimLimit.x, aimLimit.x);
                 aimOffset.y = Mathf.Clamp(aimOffset.y, -aimLimit.y, aimLimit.y);
             }
-            else
-            {
-                //Otherwise return the aim offset to zero
-                aimOffset = Vector2.Lerp(aimOffset, Vector2.zero, aimReturnSpeed * Time.deltaTime);
-            }
+            //else
+            //{
+            //    //Otherwise return the aim offset to zero
+            //    aimOffset = Vector2.Lerp(aimOffset, Vector2.zero, aimReturnSpeed * Time.deltaTime);
+            //}
 
             //Apply the aim offset to the local position
             localPos.x += aimOffset.x;
@@ -72,7 +72,8 @@ namespace RailShooter
             Vector3 direction = targetPoint.position - firePoint.position;
             Quaternion rotation = Quaternion.LookRotation(direction);
             GameObject projectile = Instantiate(projectilePrefab, firePoint.position, rotation);
-            Destroy(projectile, projectileDuration);
+            if (projectile != null)
+                Destroy(projectile, projectileDuration);
         }
 
         private void OnDestroy()
