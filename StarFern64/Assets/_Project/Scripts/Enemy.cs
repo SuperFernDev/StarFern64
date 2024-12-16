@@ -10,10 +10,15 @@ namespace RailShooter
     public partial class Enemy : ValidatedMonoBehaviour, IDamage
     {
         [SerializeField, Self] SplineAnimate splineAnimate;
+        [SerializeField, Self] AudioSource aud;
+
         [SerializeField] GameObject explosionPrefab;
         [SerializeField] float explosionDuration;
 
         [SerializeField] int HP;
+        [SerializeField] int criticalHP;
+        [SerializeField] int scoreValue;
+        [SerializeField] GameObject[] damageTrails;
         [SerializeField] Renderer[] models;
         [SerializeField] Material damageMaterial;
         [SerializeField] Transform player;
@@ -30,9 +35,14 @@ namespace RailShooter
         [SerializeField] Transform firePoint;
         [SerializeField] int maxTargetDist;
 
+        [Header("----- Sounds -----")]
+        [SerializeField] AudioClip blasterFire;
+        [Range(0, 1)][SerializeField] float blasterFireVol;
+
         Material originalMaterial;
 
         SplineContainer flightPath;
+        
         
         bool isShooting;
         float rotX;
@@ -112,6 +122,7 @@ namespace RailShooter
             Vector3 direction = player.position - firePoint.position;
             Quaternion rotation = Quaternion.LookRotation(direction);
             GameObject projectile = Instantiate(projectilePrefab, firePoint.position, rotation);
+            aud.PlayOneShot(blasterFire, blasterFireVol);
             
             if (projectile != null)
                 Destroy(projectile, projectileDuration);
@@ -125,12 +136,20 @@ namespace RailShooter
             HP -= amount;
             
             StartCoroutine(flashDamage());
-
+            
             if (HP <= 0)
             {
                 GameObject explosion = Instantiate(explosionPrefab, this.transform.position, this.transform.rotation);
                 Destroy(gameObject);
                 Destroy(explosion, explosionDuration);
+                GameManager.instance.UpdateScore(scoreValue);
+            }
+            else if (HP <= criticalHP)
+            {
+                foreach (var trail in damageTrails)
+                {
+                    trail.SetActive(true);
+                }
             }
         }
 

@@ -11,6 +11,10 @@ namespace RailShooter
     public class PlayerController : ValidatedMonoBehaviour, IDamage
     {
         [SerializeField, Self] InputReader input;
+        
+
+        [Header("----- Player UI -----")]
+        [SerializeField] GameObject[] hpChunks;
 
         [Header("----- Player Stats -----")]
         [SerializeField] int HP = 10;
@@ -22,6 +26,7 @@ namespace RailShooter
         [SerializeField] float rollDuration = 1f;
         [SerializeField] float rotationSpeed = 10f;
 
+        [SerializeField] GameObject[] damageTrails;
         [SerializeField] Renderer[] models;
         [SerializeField] Material damageMaterial;
         [SerializeField] GameObject explosionPrefab;
@@ -41,14 +46,27 @@ namespace RailShooter
         Vector3 velocity;
         [SerializeField] float roll;
 
+
+
         Material originalMaterial;
-        
+        int maxHP;
+        int hpChunkIndex;
+
 
         void Awake()
         {
             input.LeftTap += OnLeftTap;
             input.RightTap += OnRightTap;
             input.Roll += OnRollTap;
+            input.Pause += OnPauseTap;
+        }
+
+        void OnDestroy()
+        {
+            input.LeftTap -= OnLeftTap;
+            input.RightTap -= OnRightTap;
+            input.Roll -= OnRollTap;
+            input.Pause -= OnPauseTap;
         }
 
         // Start is called before the first frame update
@@ -59,21 +77,26 @@ namespace RailShooter
                 trail.GetComponent<TrailRenderer>().enabled = false;
             }
             originalMaterial = models[0].material;
+            maxHP = HP;
+            hpChunkIndex = hpChunks.Length - 1;
         }
 
         // Update is called once per frame
         void Update()
         {
-           HandlePosition();
-           HandleRoll();
-           HandleRotation();
+            if (!GameManager.instance.isPaused)
+            {
+                HandlePosition();
+                HandleRoll();
+                HandleRotation();
+            }
         }
 
         void OnLeftTap() => BarrelRoll();
         void OnRightTap() => BarrelRoll(1);
         void OnRollTap()
         {
-            int random = UnityEngine.Random.Range(0, 1) == 0 ? -1 : 1;
+            int random = UnityEngine.Random.Range(0, 2) == 1 ? -1 : 1;
             BarrelRoll(random);
         }
 
@@ -128,7 +151,7 @@ namespace RailShooter
                     new Vector3(playerModel.localEulerAngles.x, playerModel.localEulerAngles.y, 360 * direction),
                     rollDuration, RotateMode.LocalAxisAdd).SetEase(Ease.OutCubic);
 
-                
+
             }
 
         }
@@ -146,11 +169,6 @@ namespace RailShooter
             }
         }
 
-        void OnDestroy()
-        {
-            input.LeftTap -= OnLeftTap;
-            input.RightTap -= OnRightTap;
-        }
         IEnumerator flashDamage()
         {
             foreach (var model in models)
@@ -171,6 +189,14 @@ namespace RailShooter
         {
             HP -= amount;
 
+            for (int i = 0; i < amount; i++) //Handles HP Bar UI
+            {
+                if (hpChunkIndex >= 0)
+                {
+                    hpChunks[hpChunkIndex].SetActive(false);
+                    hpChunkIndex--;
+                }
+            }
             StartCoroutine(flashDamage());
 
             if (HP <= 0)
@@ -179,6 +205,18 @@ namespace RailShooter
                 Destroy(gameObject);
                 Destroy(explosion, explosionDuration);
             }
+            else if (HP < maxHP / 2)
+            {
+                foreach (var trail in damageTrails)
+                {
+                    trail.SetActive(true);
+                }
+            }
+        }
+
+        public void OnPauseTap()
+        {
+            GameManager.instance.OnPause();
         }
     }
 }

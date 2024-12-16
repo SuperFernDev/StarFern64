@@ -8,6 +8,7 @@ namespace RailShooter
     public class WeaponSystem : ValidatedMonoBehaviour
     {
         [SerializeField, Self] InputReader input;
+        [SerializeField, Self] AudioSource aud;
 
         [SerializeField] Transform targetPoint;
         [SerializeField] float targetDistance = 50f;
@@ -19,6 +20,10 @@ namespace RailShooter
         [SerializeField] GameObject projectilePrefab;
         [SerializeField] float projectileDuration = 5f;
         [SerializeField] Transform firePoint;
+
+        [Header("----- Sounds -----")]
+        [SerializeField] AudioClip blasterFire;
+        [Range(0, 1)][SerializeField] float blasterFireVol;
 
         Vector3 velocity;
         Vector2 aimOffset; //How far from the center we are currently aiming
@@ -38,42 +43,50 @@ namespace RailShooter
         // Update is called once per frame
         void Update()
         {
-            //Set the targetPosition ahead of the player's local position by the target distance
-            Vector3 targetPosition = transform.position + transform.forward * targetDistance;
-            Vector3 localPos = transform.InverseTransformPoint(targetPosition);
-
-            //If there is an Aim Inpu
-            if (input.Aim != Vector2.zero)
+            if (!GameManager.instance.isPaused)
             {
-                aimOffset += input.Aim * aimSpeed * Time.deltaTime;
+                //Set the targetPosition ahead of the player's local position by the target distance
+                Vector3 targetPosition = transform.position + transform.forward * targetDistance;
+                Vector3 localPos = transform.InverseTransformPoint(targetPosition);
 
-                //Clamp the aim offset
-                aimOffset.x = Mathf.Clamp(aimOffset.x, -aimLimit.x, aimLimit.x);
-                aimOffset.y = Mathf.Clamp(aimOffset.y, -aimLimit.y, aimLimit.y);
+                //If there is an Aim Inpu
+                if (input.Aim != Vector2.zero)
+                {
+                    aimOffset += input.Aim * aimSpeed * Time.deltaTime;
+
+                    //Clamp the aim offset
+                    aimOffset.x = Mathf.Clamp(aimOffset.x, -aimLimit.x, aimLimit.x);
+                    aimOffset.y = Mathf.Clamp(aimOffset.y, -aimLimit.y, aimLimit.y);
+                }
+                //else
+                //{
+                //    //Otherwise return the aim offset to zero
+                //    aimOffset = Vector2.Lerp(aimOffset, Vector2.zero, aimReturnSpeed * Time.deltaTime);
+                //}
+
+                //Apply the aim offset to the local position
+                localPos.x += aimOffset.x;
+                localPos.y += aimOffset.y;
+
+                Vector3 desiredPosition = transform.TransformPoint(localPos);
+
+                //Smooth damp to the desired position
+                targetPoint.position = Vector3.SmoothDamp(targetPoint.position, desiredPosition, ref velocity, smoothTime);
             }
-            //else
-            //{
-            //    //Otherwise return the aim offset to zero
-            //    aimOffset = Vector2.Lerp(aimOffset, Vector2.zero, aimReturnSpeed * Time.deltaTime);
-            //}
-
-            //Apply the aim offset to the local position
-            localPos.x += aimOffset.x;
-            localPos.y += aimOffset.y;
-
-            Vector3 desiredPosition = transform.TransformPoint(localPos);
-
-            //Smooth damp to the desired position
-            targetPoint.position = Vector3.SmoothDamp(targetPoint.position, desiredPosition, ref velocity, smoothTime);
         }
 
         void OnFire()
         {
-            Vector3 direction = targetPoint.position - firePoint.position;
-            Quaternion rotation = Quaternion.LookRotation(direction);
-            GameObject projectile = Instantiate(projectilePrefab, firePoint.position, rotation);
-            if (projectile != null)
-                Destroy(projectile, projectileDuration);
+            if (!GameManager.instance.isPaused)
+            {
+                Vector3 direction = targetPoint.position - firePoint.position;
+                Quaternion rotation = Quaternion.LookRotation(direction);
+                GameObject projectile = Instantiate(projectilePrefab, firePoint.position, rotation);
+                aud.PlayOneShot(blasterFire, blasterFireVol);
+                if (projectile != null)
+                    Destroy(projectile, projectileDuration);
+            }
+            
         }
 
         private void OnDestroy()
