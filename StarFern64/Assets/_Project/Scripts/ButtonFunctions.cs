@@ -9,6 +9,13 @@ namespace RailShooter
 {
     public class ButtonFunctions : MonoBehaviour
     {
+        public void playGame()
+        {
+            //StartCoroutine(GameManager.instance.MainMenuShipLaunch());
+            SceneManager.LoadScene("StarFern64");
+            GameManager.instance.StateUnpause();
+        }
+
         public void resume()
         {
             GameManager.instance.StateUnpause();

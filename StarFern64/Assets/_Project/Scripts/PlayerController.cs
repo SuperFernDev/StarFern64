@@ -99,6 +99,10 @@ namespace RailShooter
             int random = UnityEngine.Random.Range(0, 2) == 1 ? -1 : 1;
             BarrelRoll(random);
         }
+        public void OnPauseTap()
+        {
+            GameManager.instance.OnPause();
+        }
 
         private void HandlePosition()
         {
@@ -213,10 +217,6 @@ namespace RailShooter
                 }
             }
         }
-
-        public void OnPauseTap()
-        {
-            GameManager.instance.OnPause();
-        }
+        
     }
 }
