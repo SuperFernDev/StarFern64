@@ -20,6 +20,10 @@ namespace RailShooter
         void Update()
         {
             rectTransform.position = Camera.main.WorldToScreenPoint(targetPoint.position); // Converts a point in world space into screen space;
+       
+            Vector3 v = rectTransform.position;
+            v.x = (v.x - Screen.width / 2) / (Screen.width / 2);
+            PlatformController.singleton.Yaw = v.x * 8;
         }
     }
 }

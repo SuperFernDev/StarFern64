@@ -32,6 +32,11 @@ namespace RailShooter
                 dmg.takeDamage(damageAmount);
                 Destroy(gameObject);
             }
+            else if (other.isTrigger)
+            {
+                GameManager.instance.player.GetComponent<PlayerController>().takeDamage(damageAmount);
+                Destroy(gameObject);
+            }
 
         }
     }

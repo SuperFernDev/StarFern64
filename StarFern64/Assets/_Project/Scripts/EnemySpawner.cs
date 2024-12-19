@@ -48,6 +48,14 @@ namespace RailShooter
         {
             SplineContainer flightPath = FlightPathFactory.GenerateFlightPath(annuli);
             EnemyFactory.GenerateEnemy(enemyPrefab, flightPath, enemyParent, flightPathParent);
+            if(GameManager.instance.eliminations >= 10)
+            {
+                spawnInterval = 3f;
+            }
+            if (GameManager.instance.eliminations >= 20)
+            {
+                spawnInterval = 2f;
+            }
 
         }
 

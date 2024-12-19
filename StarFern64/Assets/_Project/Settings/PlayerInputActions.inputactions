@@ -296,6 +296,17 @@
                 },
                 {
                     "name": "",
+                    "id": "1d2c5578-0423-4b9b-bfb9-be74a50aa667",
+                    "path": "<Gamepad>/leftShoulder",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Roll",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "15a8980c-1194-4dbd-8ffb-5ebb59004f27",
                     "path": "<Keyboard>/escape",
                     "interactions": "",

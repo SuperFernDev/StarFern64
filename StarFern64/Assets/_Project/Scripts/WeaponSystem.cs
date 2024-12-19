@@ -2,6 +2,7 @@ using KBCore.Refs;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace RailShooter
 {
@@ -14,7 +15,9 @@ namespace RailShooter
         [SerializeField] float targetDistance = 50f;
         [SerializeField] float smoothTime = 0.2f;
         [SerializeField] Vector2 aimLimit = new Vector2(50f, 20f); //How far across and up and down player is able to aim
-        [SerializeField] float aimSpeed = 10f; //How fast the reticle will move
+        [SerializeField] float mouseSensitivity = 10f;
+        [SerializeField] float controllerSensitivity = 70f;
+        //[SerializeField] float aimSpeed = 10f; //How fast the reticle will move
         [SerializeField] float aimReturnSpeed = 5f; //How fast reticle moves back to neutral position
 
         [SerializeField] GameObject projectilePrefab;
@@ -49,24 +52,32 @@ namespace RailShooter
                 Vector3 targetPosition = transform.position + transform.forward * targetDistance;
                 Vector3 localPos = transform.InverseTransformPoint(targetPosition);
 
-                //If there is an Aim Inpu
-                if (input.Aim != Vector2.zero)
+                float sensitivity = 0;
+                if (gameObject.GetComponent<PlayerInput>().currentControlScheme == "Keyboard&Mouse")
+                    sensitivity = mouseSensitivity;
+                else
+                    sensitivity = controllerSensitivity;
+
+
+                //If there is an Aim Input
+                if (input.Aim != Vector2.zero) //&& gameObject.GetComponent<PlayerInput>().currentControlScheme == "Keyboard&Mouse"
                 {
-                    aimOffset += input.Aim * aimSpeed * Time.deltaTime;
+                    aimOffset += input.Aim * sensitivity * Time.deltaTime;
 
                     //Clamp the aim offset
                     aimOffset.x = Mathf.Clamp(aimOffset.x, -aimLimit.x, aimLimit.x);
                     aimOffset.y = Mathf.Clamp(aimOffset.y, -aimLimit.y, aimLimit.y);
                 }
-                //else
-                //{
-                //    //Otherwise return the aim offset to zero
-                //    aimOffset = Vector2.Lerp(aimOffset, Vector2.zero, aimReturnSpeed * Time.deltaTime);
-                //}
+                else if(gameObject.GetComponent<PlayerInput>().currentControlScheme != "Keyboard&Mouse" && input.Aim == Vector2.zero)
+                {
+                    //Otherwise return the aim offset to zero
+                    aimOffset = Vector2.Lerp(aimOffset, Vector2.zero, aimReturnSpeed * Time.deltaTime);
+                }
 
                 //Apply the aim offset to the local position
                 localPos.x += aimOffset.x;
                 localPos.y += aimOffset.y;
+                print(aimOffset);
 
                 Vector3 desiredPosition = transform.TransformPoint(localPos);
 
@@ -77,7 +88,7 @@ namespace RailShooter
 
         void OnFire()
         {
-            if (!GameManager.instance.isPaused)
+            if (!GameManager.instance.isPaused && !this.GetComponent<PlayerController>().isBarrelRolling)
             {
                 Vector3 direction = targetPoint.position - firePoint.position;
                 Quaternion rotation = Quaternion.LookRotation(direction);

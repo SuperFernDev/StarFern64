@@ -52,10 +52,11 @@ MonoBehaviour:
   splineAnimate: {fileID: 6593884083046107361}
   aud: {fileID: 549536813879656017}
   explosionPrefab: {fileID: 2312591318274358134, guid: 77da29788f3010e4396994ea52057980, type: 3}
-  explosionDuration: 5
+  explosionDuration: 2
   HP: 2
   criticalHP: 1
-  scoreValue: 1000
+  damageValue: 200
+  eliminationValue: 800
   damageTrails:
   - {fileID: 1697886992477349546}
   - {fileID: 8480240552069187211}
@@ -81,17 +82,20 @@ MonoBehaviour:
   damageMaterial: {fileID: 2100000, guid: f3d7e18c3ac391842bb3a68d9a1c3b23, type: 2}
   player: {fileID: 0}
   enemyModel: {fileID: 1131454654046529767}
-  rotationSpeed: 10
+  rotationSpeed: 5
   faceTargetSpeed: 10
   fireRate: 0.4
-  smoothTime: 0.2
   aimLimit: {x: 50, y: 20}
   projectilePrefab: {fileID: 5101979182072373636, guid: 7e3aef5ab53a7cc4ebe3670a9b9260b0, type: 3}
   projectileDuration: 5
   firePoint: {fileID: 2646280921003113439}
   maxTargetDist: 70
+  healthPackPrefab: {fileID: 1944442950615171364, guid: 97de93293aabe184f9b890ad16c4f804, type: 3}
+  shieldItemPrefab: {fileID: 6662413777132678512, guid: 4c7ff36be7df5df40a3be0d199696106, type: 3}
   blasterFire: {fileID: 8300000, guid: c29a15ff03335434cbdf5a163730c7a8, type: 3}
   blasterFireVol: 0.5
+  explosion: {fileID: 8300000, guid: 1bac16767e02e5e48990ec48fd1ee15f, type: 3}
+  explosionVol: 0.5
 --- !u!54 &12915309278414890
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -138,7 +142,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 10, y: 2, z: 10}
+  m_Size: {x: 10, y: 7.5, z: 10}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &6593884083046107361
 MonoBehaviour:
@@ -283,7 +287,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 358155672595444317}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

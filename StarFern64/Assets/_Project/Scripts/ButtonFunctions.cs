@@ -11,9 +11,7 @@ namespace RailShooter
     {
         public void playGame()
         {
-            //StartCoroutine(GameManager.instance.MainMenuShipLaunch());
-            SceneManager.LoadScene("StarFern64");
-            GameManager.instance.StateUnpause();
+            StartCoroutine(GameManager.instance.MainMenuShipLaunch());            
         }
 
         public void resume()
@@ -25,6 +23,16 @@ namespace RailShooter
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
             GameManager.instance.StateUnpause();
+        }
+
+        public void mainMenu()
+        {
+            SceneManager.LoadScene("Title");
+            GameManager.instance.isPaused = !GameManager.instance.isPaused;
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.Confined;
+            GameManager.currentMode = GameManager.gameMode.TITLE;
+
         }
 
         public void quit()

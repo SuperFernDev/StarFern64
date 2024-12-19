@@ -17,7 +17,8 @@ namespace RailShooter
 
         [SerializeField] int HP;
         [SerializeField] int criticalHP;
-        [SerializeField] int scoreValue;
+        [SerializeField] int damageValue;
+        [SerializeField] int eliminationValue;
         [SerializeField] GameObject[] damageTrails;
         [SerializeField] Renderer[] models;
         [SerializeField] Material damageMaterial;
@@ -28,26 +29,34 @@ namespace RailShooter
         [Header("----- Enemy Weapon System -----")]
         [SerializeField] int faceTargetSpeed;
         [SerializeField] float fireRate = 0.25f;
-        [SerializeField] float smoothTime = 0.2f;
+        //[SerializeField] float smoothTime = 0.2f;
         [SerializeField] Vector2 aimLimit = new Vector2(50f, 20f); //How far across and up and down enemy is able to aim
         [SerializeField] GameObject projectilePrefab;
         [SerializeField] float projectileDuration = 5f;
         [SerializeField] Transform firePoint;
         [SerializeField] int maxTargetDist;
 
+        [Header("----- Item Drops -----")]
+        [SerializeField] GameObject healthPackPrefab;
+        [SerializeField] GameObject shieldItemPrefab;
+
         [Header("----- Sounds -----")]
         [SerializeField] AudioClip blasterFire;
         [Range(0, 1)][SerializeField] float blasterFireVol;
+        [SerializeField] AudioClip explosion;
+        [Range(0, 1)][SerializeField] float explosionVol;
 
         Material originalMaterial;
 
         SplineContainer flightPath;
-        
-        
+
+
         bool isShooting;
+        bool isDead;
         float rotX;
         float rotY;
         Vector3 directionToPlayer;
+
         public SplineContainer FlightPath
         {
             get => flightPath;
@@ -68,10 +77,7 @@ namespace RailShooter
             {
                 Destroy(gameObject);
             }
-
-
             HandleRotation();
-
         }
 
         private void HandleRotation()
@@ -82,17 +88,20 @@ namespace RailShooter
                 //Debug.DrawLine(transform.position, player.position, Color.cyan);
                 Vector3 dir = player.position - transform.position;
                 directionToPlayer = dir;
-                //Calculate the rotation required to look at the target
-                Quaternion targetRotation = Quaternion.LookRotation(dir);
-                rotX = targetRotation.eulerAngles.x;
-                rotY = targetRotation.eulerAngles.y;
-                rotX = Mathf.Clamp(rotX, -aimLimit.x, aimLimit.x);
-                rotY = Mathf.Clamp(rotX, -aimLimit.y, aimLimit.y);
-                targetRotation.eulerAngles.Set(rotX, rotY, targetRotation.eulerAngles.z);
-                enemyModel.rotation = Quaternion.Lerp(enemyModel.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                float dot = Vector3.Dot(player.forward, dir.normalized);
+                print(dot);
+                if (dot <= 0.1)
+                {
+                    //Calculate the rotation required to look at the target
+                    Quaternion targetRotation = Quaternion.LookRotation(dir);
+                    rotX = targetRotation.eulerAngles.x;
+                    rotY = targetRotation.eulerAngles.y;
+                    targetRotation.eulerAngles.Set(rotX, rotY, targetRotation.eulerAngles.z);
+                    enemyModel.rotation = Quaternion.Lerp(enemyModel.rotation, targetRotation, rotationSpeed * Time.deltaTime);
 
-                if (!isShooting && Mathf.Abs(enemyModel.rotation.y) <= 90)
-                    StartCoroutine(shoot());
+                    if (!isShooting && !isDead) // TODO: enemy rotation check needs to be fixed
+                        StartCoroutine(shoot());
+                }
             }
             //else
             //{
@@ -106,7 +115,7 @@ namespace RailShooter
             {
                 model.material = damageMaterial;
             }
-            
+
             yield return new WaitForSeconds(0.1f);
 
             foreach (var model in models)
@@ -123,10 +132,10 @@ namespace RailShooter
             Quaternion rotation = Quaternion.LookRotation(direction);
             GameObject projectile = Instantiate(projectilePrefab, firePoint.position, rotation);
             aud.PlayOneShot(blasterFire, blasterFireVol);
-            
+
             if (projectile != null)
                 Destroy(projectile, projectileDuration);
-            
+
             yield return new WaitForSeconds(fireRate);
             isShooting = false;
         }
@@ -134,23 +143,44 @@ namespace RailShooter
         public void takeDamage(int amount)
         {
             HP -= amount;
-            
+
             StartCoroutine(flashDamage());
-            
-            if (HP <= 0)
+            if (HP > 0)
             {
-                GameObject explosion = Instantiate(explosionPrefab, this.transform.position, this.transform.rotation);
-                Destroy(gameObject);
-                Destroy(explosion, explosionDuration);
-                GameManager.instance.UpdateScore(scoreValue);
-            }
-            else if (HP <= criticalHP)
-            {
-                foreach (var trail in damageTrails)
+                GameManager.instance.UpdateScore(damageValue * amount);
+                if (HP <= criticalHP)
                 {
-                    trail.SetActive(true);
+                    foreach (var trail in damageTrails)
+                    {
+                        trail.SetActive(true);
+                    }
                 }
             }
+            else // HP <= 0
+            {
+                isDead = true;
+                GameObject explosionVFX = Instantiate(explosionPrefab, this.transform.position, this.transform.rotation);
+                aud.PlayOneShot(explosion, explosionVol);
+                int random = UnityEngine.Random.Range(-1, 100);
+                if (random < 40)
+                    Instantiate(healthPackPrefab, this.transform.position, healthPackPrefab.transform.rotation);
+                else if (random < 71)
+                    Instantiate(shieldItemPrefab, this.transform.position, shieldItemPrefab.transform.rotation);
+                foreach (var model in models)
+                {
+                    model.enabled = false;
+                }
+                gameObject.GetComponent<BoxCollider>().enabled = false;
+                Destroy(gameObject, 2);
+                Destroy(explosionVFX, explosionDuration);
+                GameManager.instance.UpdateScore(eliminationValue, 1);
+
+                if (GameManager.instance.eliminations >= 15)
+                {
+                    fireRate = 0.1f;
+                }
+            }
+
         }
 
         private void OnDestroy()
@@ -159,6 +189,7 @@ namespace RailShooter
             {
                 Destroy(flightPath.gameObject);
             }
+
         }
     }
 }

@@ -60,7 +60,7 @@ namespace RailShooter
         {
             float currentDirection = Move.x;
 
-            if (Time.time - lastMoveTime < doubleTapTime && currentDirection == lastMoveDirection)
+            if (Time.time - lastMoveTime < doubleTapTime && playerInput.currentControlScheme != "Gamepad" && currentDirection == lastMoveDirection)
             {
                 if (currentDirection < 0)
                 {

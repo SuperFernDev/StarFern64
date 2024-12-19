@@ -5,7 +5,9 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using UnityEngine.Windows;
 
 namespace RailShooter
@@ -16,34 +18,45 @@ namespace RailShooter
         public enum gameMode { TITLE, STAR_FERN }
         public static gameMode currentMode;
 
-        [Header("----- Player Reference -----")]
-        [SerializeField] Transform player;
+        [Header("----- Game Mode -----")]
+        [SerializeField] gameMode modeSelection;
+
+        [Header("----- Title Player Reference -----")]
+        public GameObject player;
         [SerializeField] Transform launchTarget;
         [SerializeField] float launchTime;
-        [SerializeField] float movementSpeed = 10f;
+        [SerializeField] float smoothTime = 0.2f;
         Vector3 velocity;
-        float smoothTime = 0.2f;
 
-        [Header("EventSystem")]
+        [Header("----- EventSystem -----")]
         public GameObject eventSystem;
         [SerializeField, Self] AudioSource aud;
 
-        [Header("Menu Variables")]
-        [SerializeField] gameMode modeSelection;
-        [SerializeField] GameObject menuActive;
-        //[SerializeField] GameObject menuScore; // TODO: The UI for when Game Ends
-        //[SerializeField] GameObject scoreDisplay;
-        [SerializeField] TMP_Text score;
-        [SerializeField] int maxScoreLength; //max length of score text
-
-        [SerializeField] GameObject menuPause;
-        //[SerializeField] GameObject menuControls;
-
-        [Header("Menu First Selected Options")]
+        [Header("----- Main Menu -----")]
+        [SerializeField] GameObject mainMenu;
         [SerializeField] GameObject mainMenuFirst;
+
+        [Header("-----Menu Variables -----")]
+        [SerializeField] GameObject menuActive;
         [SerializeField] GameObject pauseMenuFirst;
-        //[SerializeField] GameObject settingsMenuFirst;
-        //[SerializeField] GameObject controlsMenuFirst;
+        [SerializeField] float menuTimeDelay;        
+
+        [Header("----- Pause Menu and HUD -----")]
+        [SerializeField] GameObject menuPause;
+        [SerializeField] TMP_Text score;
+        [SerializeField] TMP_Text highScore;
+
+        [Header("----- Results Screen -----")]
+        [SerializeField] GameObject menuResults;
+        [SerializeField] GameObject resultsMenuFirst;
+        [SerializeField] Image[] stars;
+        [SerializeField] TMP_Text resultsScore;
+        [SerializeField] TMP_Text resultsEliminations;
+        [SerializeField] int starThresh1;
+        [SerializeField] int starThresh2;
+        [SerializeField] int starThresh3;
+        [SerializeField] float alphaIncrease;
+        [SerializeField] float starAppearanceRate;
 
         [Header("----- Sounds -----")]
         [SerializeField] AudioClip menuPopUP;
@@ -51,15 +64,32 @@ namespace RailShooter
         [SerializeField] AudioClip menuOff;
         [Range(0, 1)][SerializeField] float menuOffVol;
 
-
         int currentScore;
+        public int eliminations;
         public bool isPaused;
         bool fullScreen;
 
         void Awake()
         {
             instance = this;
+            currentMode = modeSelection;
+            if (currentMode == GameManager.gameMode.TITLE)
+                EventSystem.current.SetSelectedGameObject(mainMenuFirst);
+            else
+                UpdateHighScore();
+        }
 
+        private void Start()
+        {
+            eliminations = 0;
+            PlatformController.singleton.Init("COM9", 115200);
+        }
+
+        private void Update()
+        {
+            if (currentMode == GameManager.gameMode.TITLE)
+                PlatformController.singleton.Heave = player.transform.position.y * 5;
+            print(PlatformController.singleton.Heave);
         }
 
         public void StatePause()
@@ -76,14 +106,14 @@ namespace RailShooter
             Time.timeScale = 1;
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
-            if(menuActive != null)
+            if (menuActive != null)
                 menuActive.SetActive(false);
             menuActive = null;
         }
 
         public void OnPause()
         {
-            if (currentMode == GameManager.gameMode.TITLE)
+            if (currentMode == GameManager.gameMode.TITLE) //Added to stop cursor from locking. InputReader was somehow bypassing the checks and running StateUnpause
                 return;
             if (menuActive == null)
             {
@@ -91,7 +121,7 @@ namespace RailShooter
                 aud.PlayOneShot(menuPopUP, menuPopUPVol);
                 menuActive = menuPause;
                 menuActive.SetActive(isPaused);
-                EventSystem.current.SetSelectedGameObject(pauseMenuFirst);
+                StartCoroutine(SetFirstSelected(pauseMenuFirst));
             }
             else if (menuActive == menuPause)
             {
@@ -100,36 +130,100 @@ namespace RailShooter
             }
         }
 
-        public void UpdateScore(int amount)
+        public void UpdateScore(int scoreVal, int elimination = 0)
         {
-            currentScore += amount;
+            currentScore += scoreVal;
             score.text = currentScore.ToString();
+            eliminations += elimination;
+            CheckHighScore();
+        }
 
-            //while (score.text.Length < maxScoreLength)
-            //{
-            //    score.text.Insert(0, "0");
-            //}
+         void CheckHighScore()
+        {
+            if (currentScore > PlayerPrefs.GetInt("HighScore", 0))
+            {
+                PlayerPrefs.SetInt("HighScore", currentScore);    
+                UpdateHighScore();
+            }
+        }
+
+        void UpdateHighScore()
+        {
+            highScore.text = PlayerPrefs.GetInt("HighScore", 0).ToString();
+        }
+
+        // RESULTS SCREEN //
+        public void ResultsScreen()
+        {
+            if(menuActive != null)
+                menuActive.SetActive(false);
+            isPaused = !isPaused;
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.Confined;
+            //StatePause();
+            menuActive = menuResults;
+            menuActive.SetActive(true);
+            FinalScore();
+            StartCoroutine(SetFirstSelected(resultsMenuFirst));
+        }
+
+        void FinalScore()
+        {
+            resultsScore.text = currentScore.ToString();
+            resultsEliminations.text = eliminations.ToString();
+            StarResults();
+        }
+
+        void StarResults()
+        {
+            int starsToAdd = 0;
+            if (currentScore >= starThresh3)
+                starsToAdd = 3;
+            else if (currentScore >= starThresh2)
+                starsToAdd = 2;
+            else if (currentScore >= starThresh1)
+                starsToAdd = 1;
+
+            for (int i = 0; i < starsToAdd; i++)
+            {
+                stars[i].enabled = true;
+            }
         }
 
         public IEnumerator MainMenuShipLaunch()
         {
-            // Calculate the target pos based on follow distance and the target's position
-            Vector3 targetPosition = launchTarget.position + launchTarget.forward; //* -followDistance;
+            mainMenu.SetActive(false);
+            player.GetComponent<SpinAndBob>().enabled = false;
+            foreach (var trail in player.GetComponent<PlayerController>().trailEffects)
+            {
+                trail.GetComponent<TrailRenderer>().enabled = true;
+            }
 
-            // Apply smooth damp to the player's position
-            Vector3 smoothedPos = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, smoothTime);
+            Vector3 velocity = Vector3.zero; // Ensure velocity is initialized
+            Vector3 targetPosition = launchTarget.position + launchTarget.forward;
 
-            // Calculate the new local position 
-            Vector3 localPos = transform.InverseTransformPoint(smoothedPos);
-            localPos.x += movementSpeed * Time.deltaTime; //* movementRange;
-            localPos.y += movementSpeed * Time.deltaTime; //* movementRange;
+            while (Vector3.Distance(player.transform.position, targetPosition) > 0.01f) // Check if we're close to the target
+            {
+                // Smoothly move towards the target
+                player.transform.position = Vector3.SmoothDamp(player.transform.position, targetPosition, ref velocity, smoothTime);
+                // Wait for the next frame
+                yield return null;
+            }
 
-            // Update player's position
-            player.transform.position = transform.TransformPoint(localPos);
-            yield return new WaitForSeconds(launchTime);
-            //SceneManager.LoadScene("StarFern64");
-            //StateUnpause();
+            // Ensure the player snaps exactly to the target at the end
+            player.transform.position = targetPosition;
 
+            SceneManager.LoadScene("StarFern64");
+            currentMode = gameMode.STAR_FERN;
+            StateUnpause();
+        }
+
+        public IEnumerator SetFirstSelected(GameObject selection)
+        {
+            if (player.GetComponent<PlayerInput>().currentControlScheme == "Keyboard&Mouse")
+                menuTimeDelay = 0;
+            yield return new WaitForSeconds(menuTimeDelay);
+            EventSystem.current.SetSelectedGameObject(selection);
         }
     }
 }
