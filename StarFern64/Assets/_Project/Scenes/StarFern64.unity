@@ -13126,7 +13126,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1944442950615171364, guid: 97de93293aabe184f9b890ad16c4f804, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6072053589841257749, guid: 97de93293aabe184f9b890ad16c4f804, type: 3}
       propertyPath: audSource
