@@ -82,7 +82,7 @@ namespace RailShooter
         private void Start()
         {
             eliminations = 0;
-            PlatformController.singleton.Init("COM9", 115200);
+            PlatformController.singleton.Init("COM5", 115200);
         }
 
         private void Update()

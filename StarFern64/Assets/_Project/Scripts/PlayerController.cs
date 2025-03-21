@@ -11,6 +11,7 @@ namespace RailShooter
 {
     public class PlayerController : ValidatedMonoBehaviour, IDamage
     {
+        [SerializeField] string COM;
         [SerializeField, Self] InputReader input;
         [SerializeField] AudioSource aud;
 
@@ -102,7 +103,7 @@ namespace RailShooter
             isBarrelRolling = false;
             aud = this.GetComponent<AudioSource>();
 
-            PlatformController.singleton.Init("COM9", 115200);
+            PlatformController.singleton.Init(COM, 115200);
         }
 
         // Update is called once per frame

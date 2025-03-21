@@ -12875,6 +12875,10 @@ PrefabInstance:
       value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 5699338928655320902, guid: 5ebbed8b0a2c7c846bdbe2b0db4681ee, type: 3}
+      propertyPath: COM
+      value: COM5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5699338928655320902, guid: 5ebbed8b0a2c7c846bdbe2b0db4681ee, type: 3}
       propertyPath: explosionVol
       value: 1
       objectReference: {fileID: 0}

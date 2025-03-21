@@ -3171,6 +3171,7 @@ MonoBehaviour:
   menuTimeDelay: 0
   menuPause: {fileID: 0}
   score: {fileID: 1328909045}
+  highScore: {fileID: 0}
   menuResults: {fileID: 0}
   resultsMenuFirst: {fileID: 0}
   stars: []
@@ -3185,6 +3186,7 @@ MonoBehaviour:
   menuPopUPVol: 1
   menuOff: {fileID: 8300000, guid: e6355c62accc8394584b7fc043d85eb1, type: 3}
   menuOffVol: 1
+  eliminations: 0
   isPaused: 0
 --- !u!114 &1089237709
 MonoBehaviour:
@@ -11072,6 +11074,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2b0504242f2b3948a141638d58527a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  COM: COM5
   input: {fileID: 1669957552}
   aud: {fileID: 1669957557}
   hpChunks:
@@ -11086,6 +11089,7 @@ MonoBehaviour:
   - {fileID: 39626993}
   - {fileID: 99695340}
   - {fileID: 2107031863}
+  shieldChunks: []
   HP: 100
   criticalHP: 0
   movementRange: 5
@@ -11109,6 +11113,7 @@ MonoBehaviour:
   shipParts: []
   damageMaterial: {fileID: 2100000, guid: f3d7e18c3ac391842bb3a68d9a1c3b23, type: 2}
   explosionPrefab: {fileID: 1804206099813350, guid: 4dd02b5f854b6c84990fbeb810abffe4, type: 3}
+  shield: {fileID: 0}
   explosionDuration: 0
   modelParent: {fileID: 1093223117}
   playerModel: {fileID: 5417604328576667135}
@@ -11120,6 +11125,9 @@ MonoBehaviour:
   criticalAlarmVol: 0
   explosion: {fileID: 0}
   explosionVol: 0
+  shieldDeactivateSFX: {fileID: 0}
+  shieldDeactivateVol: 0
+  isBarrelRolling: 0
 --- !u!114 &1669957554
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11138,7 +11146,8 @@ MonoBehaviour:
   targetDistance: 50
   smoothTime: 0.2
   aimLimit: {x: 50, y: 20}
-  aimSpeed: 10
+  mouseSensitivity: 10
+  controllerSensitivity: 70
   aimReturnSpeed: 5
   projectilePrefab: {fileID: 5101979182072373636, guid: 7abf84b42ad603348808e3f99a7fa88a, type: 3}
   projectileDuration: 5
